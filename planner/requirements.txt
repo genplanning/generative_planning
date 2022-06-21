@@ -74,7 +74,6 @@ notebook=6.4.3=py36h06a4308_0
 numpy=1.19.2=py36h54aff64_0
 numpy-base=1.19.2=py36hfa32c7d_0
 olefile=0.46=py36_0
-opencv-python=4.6.0.66=pypi_0
 openjpeg=2.4.0=h3ad879b_0
 openssl=1.1.1o=h7f8727e_0
 packaging=21.3=pyhd3eb1b0_0
