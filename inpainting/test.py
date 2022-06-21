@@ -58,8 +58,8 @@ for i, data in enumerate(dataset):
     else:        
         generated = model.inference(data['label'], data['inst'], data['image'])
         
-    visuals = OrderedDict([('input_label', util.tensor2label(data['label'][0], opt.label_nc)),
-                           ('synthesized_image', util.tensor2im(generated[0].data[0]))])
+    visuals = OrderedDict([('real_A', util.tensor2label(data['label'][0], opt.label_nc)),
+                           ('fake_B', util.tensor2im(generated[0].data[0]))])
     img_path = data['path']
     print('process image... %s' % img_path)
     visualizer.save_images(webpage, visuals, img_path)
