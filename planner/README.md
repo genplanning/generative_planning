@@ -4,6 +4,7 @@ We use Anaconda for library management
 
 # Install Dependencies
 $ conda create --name planner_demo --file requirements.txt
+
 $ conda activate planner_demo
 - install opencv separately with 'pip install opencv-python'
 
