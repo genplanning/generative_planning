@@ -2,7 +2,7 @@
 Code tested on Python 3.6.13
 
 # Install Dependencies
-$ conda create --name <env> --file requirements.txt
+$ conda create --name planner_demo --file requirements.txt
 - we recommend installing opencv separately with 'pip install opencv-python'
 
 # Run Demo
