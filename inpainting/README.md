@@ -18,12 +18,12 @@ pip install dominate
 
 
 ### Testing
-- A few example test images from our dataset are included in the `datasets/images` folder.
+- A few example test images from our dataset are included in the `datasets/test` folder.
 - Please download our pre-trained model from [here](https://drive.google.com/file/d/1fJeFGncl0RiUH8VBL6-NGeDbELEmVIAP/view?usp=sharing) (google drive link), and put it under `./checkpoints/fixed_render_hd1/`
 - Test the model:
 ```bash
 #!./scripts/test_256p.sh
-python test.py --dataroot datasets/images --name fixed_render_hd1 --no_instance --label_nc 0 --loadSize 256
+python test.py --dataroot datasets/test --name fixed_render_hd1 --no_instance --label_nc 0 --loadSize 256
 ```
 The test results will be saved to a html file here: `./results/fixed_rendering_more/test_latest/index.html`.
 
