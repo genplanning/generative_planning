@@ -18,7 +18,8 @@ pip install dominate
 
 
 ### Testing
-
+- A few example Cityscapes test images are included in the `datasets/images` folder.
+- Please download the pre-trained Cityscapes model from [here](https://drive.google.com/file/d/1fJeFGncl0RiUH8VBL6-NGeDbELEmVIAP/view?usp=sharing) (google drive link), and put it under `./checkpoints/fixed_render_hd1/`
 - Test the model:
 ```bash
 #!./scripts/test_256p.sh
