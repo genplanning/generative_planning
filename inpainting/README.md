@@ -51,4 +51,4 @@ If you have tensorflow installed, you can see tensorboard logs in `./checkpoints
 
 
 ## Acknowledgments
-This code and readme instructsion borrows heavily from [pix2pixHD](https://github.com/NVIDIA/pix2pixHD).
+This code and readme instructions borrows heavily from [pix2pixHD](https://github.com/NVIDIA/pix2pixHD).
