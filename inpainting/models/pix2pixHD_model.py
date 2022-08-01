@@ -199,9 +199,9 @@ class Pix2PixHDModel(BaseModel):
         '''           
         # VGG feature matching loss
         #loss_G_VGG = 0
-        mask_fake=torch.from_numpy(self.mask_img(input_label,fake_image)).float().cuda()
+        mask_fake=torch.from_numpy(self.mask_img(image,fake_image)).float().cuda()
         loss_NCE = self.calculate_NCE_loss(real_image, fake_image)
-        loss_L1= self.criterionL1(mask_fake,input_label)
+        loss_L1= self.criterionL1(mask_fake,image)
         '''
         if not self.opt.no_vgg_loss:
             loss_G_VGG = self.criterionVGG(fake_image, real_image) * self.opt.lambda_feat
