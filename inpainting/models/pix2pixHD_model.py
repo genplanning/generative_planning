@@ -5,6 +5,7 @@ from torch.autograd import Variable
 from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
+import torch.nn as nn
 from .patchnce import PatchNCELoss
 class Pix2PixHDModel(BaseModel):
     def name(self):
@@ -23,6 +24,7 @@ class Pix2PixHDModel(BaseModel):
         self.isTrain = opt.isTrain
         self.use_features = opt.instance_feat or opt.label_feat
         self.gen_features = self.use_features and not self.opt.load_features
+        self.criterionL1 = torch.nn.L1Loss().to(self.device)
         input_nc = opt.label_nc if opt.label_nc != 0 else opt.input_nc
 
         ##### define networks        
