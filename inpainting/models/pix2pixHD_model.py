@@ -197,13 +197,15 @@ class Pix2PixHDModel(BaseModel):
         '''           
         # VGG feature matching loss
         #loss_G_VGG = 0
+        mask_fake=torch.from_numpy(self.mask_img(input_label,fake_image)).float().cuda()
         loss_NCE = self.calculate_NCE_loss(real_image, fake_image)
+        loss_L1= self.criterionL1(mask_fake,input_label)
         '''
         if not self.opt.no_vgg_loss:
             loss_G_VGG = self.criterionVGG(fake_image, real_image) * self.opt.lambda_feat
         '''
         # Only return the fake_B image if necessary to save BW
-        return [ self.loss_filter( loss_G_GAN,loss_NCE, loss_NCE, loss_D_real, loss_D_fake ), None if not infer else fake_image ]
+        return [ self.loss_filter( loss_G_GAN,loss_NCE, loss_L1, loss_D_real, loss_D_fake ), None if not infer else fake_image ]
 
     def inference(self, label, inst, image=None):
         # Encode Inputs        
@@ -301,7 +303,14 @@ class Pix2PixHDModel(BaseModel):
             total_nce_loss += loss.mean()
 
         return total_nce_loss / n_layers
-
+    
+    def mask_img(self,im1,im2):
+        for i in range(len(im1)):
+            for j in range(len(im1[i])):
+                if np.all(im1[i,j]==[0,0,0]):
+                    im2[i,j]=[0,0,0]
+        return im2
+    
     def save(self, which_epoch):
         self.save_network(self.netG, 'G', which_epoch, self.gpu_ids)
         self.save_network(self.netD, 'D', which_epoch, self.gpu_ids)
