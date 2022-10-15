@@ -33,7 +33,7 @@ def get_params(opt, size):
 def get_transform(opt, params, method=Image.BICUBIC, normalize=True):
     transform_list = []
     if 'resize' in opt.resize_or_crop:
-        osize = [opt.loadSize, opt.loadSize]
+        osize = [opt.loadSize+16, opt.loadSize]
         transform_list.append(transforms.Scale(osize, method))   
     elif 'scale_width' in opt.resize_or_crop:
         transform_list.append(transforms.Lambda(lambda img: __scale_width(img, opt.loadSize, method)))
