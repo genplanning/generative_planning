@@ -23,7 +23,7 @@ pip install dominate
 - Test the model:
 ```bash
 #!./scripts/test_256p.sh
-python test.py --dataroot datasets/test --name fixed_render_hd1 --no_instance --label_nc 0 --loadSize 256
+python test.py --dataroot datasets/test --name fixed_rendering_adv  --model pix2pix
 ```
 The test results will be saved to a html file here: `./results/fixed_rendering_more/test_latest/index.html`.
 
