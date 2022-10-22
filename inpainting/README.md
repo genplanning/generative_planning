@@ -14,11 +14,15 @@ Pytorch implementation of our proposed inpaining model for lidar image to semant
 ```bash
 pip install dominate
 ```
-
+## Preprocess dataset
+If you download our released original dataset without processing, then you need to preprocess our dataset first, by combining every corresponding input and groundtruth image into one image by running the following command
+```bash
+python datasets/combine_A_and_B.py --fold_A INPUT_IMAGE_DATA_PATH --fold_B GROUNDTRUTH_DATA_PATH --fold_AB The folder you want to put your combined images in
+```
 
 
 ### Testing
-- A few example test images from our dataset are included in the `datasets/test` folder.
+- A few example test images from our dataset are included in the `datasets/test` folder (Note: for testing convenience, we only upload processed paired images verison here , so the images in this folder are the combined input (left) and groudtruth (right) images.
 - Please download our pre-trained model from [here](https://drive.google.com/file/d/1ugicQHOmuNJnytlLF-NRryJxU5efkdpJ/view?usp=sharing) (google drive link), and put it under `./checkpoints/fixed_render_hd1/`
 - Test the model:
 ```bash
