@@ -35,7 +35,7 @@ More example scripts can be found in the `scripts` directory.
 
 
 ### Training
-- Train a model at 1024 x 512 resolution (`bash ./scripts/train_512p.sh`):
+- Train a model at 1024 x 512 resolution:
 ```bash
 #!./scripts/train_256p.sh
 python train.py --dataroot DATASET_PATH  --model pix2pix --name fixed_render_hd1
