@@ -46,8 +46,6 @@ If you have tensorflow installed, you can see tensorboard logs in `./checkpoints
 
 ## More Training/Test Details
 - Flags: see `options/train_options.py` and `options/base_options.py` for all the training flags; see `options/test_options.py` and `options/base_options.py` for all the test flags.
-- Instance map: we take in both label maps and instance maps as input. If you don't want to use instance maps, please specify the flag `--no_instance`.
-
 
 
 ## Acknowledgments
