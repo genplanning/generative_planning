@@ -23,7 +23,7 @@ pip install dominate
 - Test the model:
 ```bash
 #!./scripts/test_256p.sh
-python test.py --dataroot datasets/test --name fixed_rendering_adv  --model pix2pix
+python test.py --dataroot datasets/test --name fixed_render_hd1  --model pix2pix
 ```
 The test results will be saved to a html file here: `./results/fixed_rendering_more/test_latest/index.html`.
 
@@ -38,7 +38,7 @@ More example scripts can be found in the `scripts` directory.
 - Train a model at 1024 x 512 resolution (`bash ./scripts/train_512p.sh`):
 ```bash
 #!./scripts/train_256p.sh
-python train.py --dataroot pytorch-CycleGAN-and-pix2pix/fixed_rendering_more/ --label_nc 0 --no_instance --loadSize 256 --fineSize 256 --name fixed_render_hd1
+python train.py --dataroot DATASET_PATH  --model pix2pix --name fixed_render_hd1
 ```
 - To view training results, please checkout intermediate results in `./checkpoints/fixed_render_hd1/web/index.html`.
 If you have tensorflow installed, you can see tensorboard logs in `./checkpoints/fixed_render_hd1/logs` by adding `--tf_log` to the training scripts.
