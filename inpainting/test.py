@@ -1,67 +1,80 @@
+"""General-purpose test script for image-to-image translation.
+
+Once you have trained your model with train.py, you can use this script to test the model.
+It will load a saved model from '--checkpoints_dir' and save the results to '--results_dir'.
+
+It first creates model and dataset given the option. It will hard-code some parameters.
+It then runs inference for '--num_test' images and save results to an HTML file.
+
+Example (You need to train models first or download pre-trained models from our website):
+    Test a CycleGAN model (both sides):
+        python test.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan
+
+    Test a CycleGAN model (one side only):
+        python test.py --dataroot datasets/horse2zebra/testA --name horse2zebra_pretrained --model test --no_dropout
+
+    The option '--model test' is used for generating CycleGAN results only for one side.
+    This option will automatically set '--dataset_mode single', which only loads the images from one set.
+    On the contrary, using '--model cycle_gan' requires loading and generating results in both directions,
+    which is sometimes unnecessary. The results will be saved at ./results/.
+    Use '--results_dir <directory_path_to_save_result>' to specify the results directory.
+
+    Test a pix2pix model:
+        python test.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --direction BtoA
+
+See options/base_options.py and options/test_options.py for more test options.
+See training and test tips at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/tips.md
+See frequently asked questions at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/qa.md
+"""
 import os
-from collections import OrderedDict
-from torch.autograd import Variable
 from options.test_options import TestOptions
-from data.data_loader import CreateDataLoader
-from models.models import create_model
-import util.util as util
-from util.visualizer import Visualizer
+from data import create_dataset
+from models import create_model
+from util.visualizer import save_images
 from util import html
-import torch
 
-opt = TestOptions().parse(save=False)
-opt.nThreads = 1   # test code only supports nThreads = 1
-opt.batchSize = 1  # test code only supports batchSize = 1
-opt.serial_batches = True  # no shuffle
-opt.no_flip = True  # no flip
+try:
+    import wandb
+except ImportError:
+    print('Warning: wandb package cannot be found. The option "--use_wandb" will result in error.')
 
-data_loader = CreateDataLoader(opt)
-dataset = data_loader.load_data()
-visualizer = Visualizer(opt)
-# create website
-web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.which_epoch))
-webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.which_epoch))
 
-# test
-if not opt.engine and not opt.onnx:
-    model = create_model(opt)
-    if opt.data_type == 16:
-        model.half()
-    elif opt.data_type == 8:
-        model.type(torch.uint8)
-            
-    if opt.verbose:
-        print(model)
-else:
-    from run_engine import run_trt_engine, run_onnx
-    
-for i, data in enumerate(dataset):
-    #if i >= opt.how_many:
-        #break
-    if opt.data_type == 16:
-        data['label'] = data['label'].half()
-        data['inst']  = data['inst'].half()
-    elif opt.data_type == 8:
-        data['label'] = data['label'].uint8()
-        data['inst']  = data['inst'].uint8()
-    if opt.export_onnx:
-        print ("Exporting to ONNX: ", opt.export_onnx)
-        assert opt.export_onnx.endswith("onnx"), "Export model file should end with .onnx"
-        torch.onnx.export(model, [data['label'], data['inst']],
-                          opt.export_onnx, verbose=True)
-        exit(0)
-    minibatch = 1 
-    if opt.engine:
-        generated = run_trt_engine(opt.engine, minibatch, [data['label'], data['inst']])
-    elif opt.onnx:
-        generated = run_onnx(opt.onnx, opt.data_type, minibatch, [data['label'], data['inst']])
-    else:        
-        generated = model.inference(data['label'], data['inst'], data['image'])
-        
-    visuals = OrderedDict([('real_A', util.tensor2label(data['label'][0], opt.label_nc)),
-                           ('fake_B', util.tensor2im(generated[0].data[0]))])
-    img_path = data['path']
-    print('process image... %s' % img_path)
-    visualizer.save_images(webpage, visuals, img_path)
+if __name__ == '__main__':
+    opt = TestOptions().parse()  # get test options
+    # hard-code some parameters for test
+    opt.num_threads = 0   # test code only supports num_threads = 0
+    opt.batch_size = 1    # test code only supports batch_size = 1
+    opt.serial_batches = True  # disable data shuffling; comment this line if results on randomly chosen images are needed.
+    opt.no_flip = True    # no flip; comment this line if results on flipped images are needed.
+    opt.display_id = -1   # no visdom display; the test code saves the results to a HTML file.
+    dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
+    model = create_model(opt)      # create a model given opt.model and other options
+    model.setup(opt)               # regular setup: load and print networks; create schedulers
 
-webpage.save()
+    # initialize logger
+    if opt.use_wandb:
+        wandb_run = wandb.init(project='CycleGAN-and-pix2pix', name=opt.name, config=opt) if not wandb.run else wandb.run
+        wandb_run._label(repo='CycleGAN-and-pix2pix')
+
+    # create a website
+    web_dir = os.path.join(opt.results_dir, opt.name, '{}_{}'.format(opt.phase, opt.epoch))  # define the website directory
+    if opt.load_iter > 0:  # load_iter is 0 by default
+        web_dir = '{:s}_iter{:d}'.format(web_dir, opt.load_iter)
+    print('creating web directory', web_dir)
+    webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.epoch))
+    # test with eval mode. This only affects layers like batchnorm and dropout.
+    # For [pix2pix]: we use batchnorm and dropout in the original pix2pix. You can experiment it with and without eval() mode.
+    # For [CycleGAN]: It should not affect CycleGAN as CycleGAN uses instancenorm without dropout.
+    if opt.eval:
+        model.eval()
+    for i, data in enumerate(dataset):
+        #if i >= opt.num_test:  # only apply our model to opt.num_test images.
+            #break
+        model.set_input(data)  # unpack data from data loader
+        model.test()           # run inference
+        visuals = model.get_current_visuals()  # get image results
+        img_path = model.get_image_paths()     # get image paths
+        if i % 5 == 0:  # save images to an HTML file
+            print('processing (%04d)-th image... %s' % (i, img_path))
+        save_images(webpage, visuals, img_path, aspect_ratio=opt.aspect_ratio, width=opt.display_winsize, use_wandb=opt.use_wandb)
+    webpage.save()  # save the HTML

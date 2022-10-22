@@ -1,141 +1,77 @@
-import time
-import os
-import numpy as np
-import torch
-from torch.autograd import Variable
-from collections import OrderedDict
-from subprocess import call
-import fractions
-def lcm(a,b): return abs(a * b)/fractions.gcd(a,b) if a and b else 0
+"""General-purpose training script for image-to-image translation.
 
+This script works for various models (with option '--model': e.g., pix2pix, cyclegan, colorization) and
+different datasets (with option '--dataset_mode': e.g., aligned, unaligned, single, colorization).
+You need to specify the dataset ('--dataroot'), experiment name ('--name'), and model ('--model').
+
+It first creates model, dataset, and visualizer given the option.
+It then does standard network training. During the training, it also visualize/save the images, print/save the loss plot, and save models.
+The script supports continue/resume training. Use '--continue_train' to resume your previous training.
+
+Example:
+    Train a CycleGAN model:
+        python train.py --dataroot ./datasets/maps --name maps_cyclegan --model cycle_gan
+    Train a pix2pix model:
+        python train.py --dataroot ./datasets/facades --name facades_pix2pix --model pix2pix --direction BtoA
+
+See options/base_options.py and options/train_options.py for more training options.
+See training and test tips at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/tips.md
+See frequently asked questions at: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/blob/master/docs/qa.md
+"""
+import time
 from options.train_options import TrainOptions
-from data.data_loader import CreateDataLoader
-from models.models import create_model
-import util.util as util
+from data import create_dataset
+from models import create_model
 from util.visualizer import Visualizer
 
-opt = TrainOptions().parse()
-iter_path = os.path.join(opt.checkpoints_dir, opt.name, 'iter.txt')
-if opt.continue_train:
-    try:
-        start_epoch, epoch_iter = np.loadtxt(iter_path , delimiter=',', dtype=int)
-    except:
-        start_epoch, epoch_iter = 1, 0
-    print('Resuming from epoch %d at iteration %d' % (start_epoch, epoch_iter))        
-else:    
-    start_epoch, epoch_iter = 1, 0
+if __name__ == '__main__':
+    opt = TrainOptions().parse()   # get training options
+    dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
+    dataset_size = len(dataset)    # get the number of images in the dataset.
+    print('The number of training images = %d' % dataset_size)
 
-opt.print_freq = lcm(opt.print_freq, opt.batchSize)    
-if opt.debug:
-    opt.display_freq = 1
-    opt.print_freq = 1
-    opt.niter = 1
-    opt.niter_decay = 0
-    opt.max_dataset_size = 10
+    model = create_model(opt)      # create a model given opt.model and other options
+    model.setup(opt)               # regular setup: load and print networks; create schedulers
+    visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
+    total_iters = 0                # the total number of training iterations
 
-data_loader = CreateDataLoader(opt)
-dataset = data_loader.load_data()
-dataset_size = len(data_loader)
-print('#training images = %d' % dataset_size)
+    for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
+        epoch_start_time = time.time()  # timer for entire epoch
+        iter_data_time = time.time()    # timer for data loading per iteration
+        epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
+        visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
+        model.update_learning_rate()    # update learning rates in the beginning of every epoch.
+        for i, data in enumerate(dataset):  # inner loop within one epoch
+            iter_start_time = time.time()  # timer for computation per iteration
+            if total_iters % opt.print_freq == 0:
+                t_data = iter_start_time - iter_data_time
 
-model = create_model(opt)
-visualizer = Visualizer(opt)
-if opt.fp16:    
-    from apex import amp
-    model, [optimizer_G, optimizer_D] = amp.initialize(model, [model.optimizer_G, model.optimizer_D], opt_level='O1')             
-    model = torch.nn.DataParallel(model, device_ids=opt.gpu_ids)
-else:
-    optimizer_G, optimizer_D = model.module.optimizer_G, model.module.optimizer_D
+            total_iters += opt.batch_size
+            epoch_iter += opt.batch_size
+            model.set_input(data)         # unpack data from dataset and apply preprocessing
+            model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
-total_steps = (start_epoch-1) * dataset_size + epoch_iter
+            if total_iters % opt.display_freq == 0:   # display images on visdom and save images to a HTML file
+                save_result = total_iters % opt.update_html_freq == 0
+                model.compute_visuals()
+                visualizer.display_current_results(model.get_current_visuals(), epoch, save_result)
 
-display_delta = total_steps % opt.display_freq
-print_delta = total_steps % opt.print_freq
-save_delta = total_steps % opt.save_latest_freq
+            if total_iters % opt.print_freq == 0:    # print training losses and save logging information to the disk
+                losses = model.get_current_losses()
+                t_comp = (time.time() - iter_start_time) / opt.batch_size
+                visualizer.print_current_losses(epoch, epoch_iter, losses, t_comp, t_data)
+                if opt.display_id > 0:
+                    visualizer.plot_current_losses(epoch, float(epoch_iter) / dataset_size, losses)
 
-for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
-    epoch_start_time = time.time()
-    if epoch != start_epoch:
-        epoch_iter = epoch_iter % dataset_size
-    for i, data in enumerate(dataset, start=epoch_iter):
-        if total_steps % opt.print_freq == print_delta:
-            iter_start_time = time.time()
-        total_steps += opt.batchSize
-        epoch_iter += opt.batchSize
+            if total_iters % opt.save_latest_freq == 0:   # cache our latest model every <save_latest_freq> iterations
+                print('saving the latest model (epoch %d, total_iters %d)' % (epoch, total_iters))
+                save_suffix = 'iter_%d' % total_iters if opt.save_by_iter else 'latest'
+                model.save_networks(save_suffix)
 
-        # whether to collect output images
-        save_fake = total_steps % opt.display_freq == display_delta
+            iter_data_time = time.time()
+        if epoch % opt.save_epoch_freq == 0:              # cache our model every <save_epoch_freq> epochs
+            print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
+            model.save_networks('latest')
+            model.save_networks(epoch)
 
-        ############## Forward Pass ######################
-        losses, generated = model(Variable(data['label']), Variable(data['inst']), 
-            Variable(data['image']), Variable(data['feat']), infer=save_fake)
-
-        # sum per device losses
-        losses = [ torch.mean(x) if not isinstance(x, int) else x for x in losses ]
-        loss_dict = dict(zip(model.module.loss_names, losses))
-
-        # calculate final loss scalar
-        loss_D = (loss_dict['D_fake'] + loss_dict['D_real']) * 0.5
-        loss_G = loss_dict['G_GAN'] + loss_dict.get('G_GAN_Feat',0) + loss_dict.get('G_VGG',0)
-
-        ############### Backward Pass ####################
-        # update generator weights
-        optimizer_G.zero_grad()
-        if opt.fp16:                                
-            with amp.scale_loss(loss_G, optimizer_G) as scaled_loss: scaled_loss.backward()                
-        else:
-            loss_G.backward()          
-        optimizer_G.step()
-
-        # update discriminator weights
-        optimizer_D.zero_grad()
-        if opt.fp16:                                
-            with amp.scale_loss(loss_D, optimizer_D) as scaled_loss: scaled_loss.backward()                
-        else:
-            loss_D.backward()        
-        optimizer_D.step()        
-
-        ############## Display results and errors ##########
-        ### print out errors
-        if total_steps % opt.print_freq == print_delta:
-            errors = {k: v.data.item() if not isinstance(v, int) else v for k, v in loss_dict.items()}            
-            t = (time.time() - iter_start_time) / opt.print_freq
-            visualizer.print_current_errors(epoch, epoch_iter, errors, t)
-            visualizer.plot_current_errors(errors, total_steps)
-            #call(["nvidia-smi", "--format=csv", "--query-gpu=memory.used,memory.free"]) 
-
-        ### display output images
-        if save_fake:
-            visuals = OrderedDict([('real_A', util.tensor2label(data['label'][0], opt.label_nc)),
-                                   ('fake_B', util.tensor2im(generated.data[0])),
-                                   ('real_B', util.tensor2im(data['image'][0]))])
-            visualizer.display_current_results(visuals, epoch, total_steps)
-
-        ### save latest model
-        if total_steps % opt.save_latest_freq == save_delta:
-            print('saving the latest model (epoch %d, total_steps %d)' % (epoch, total_steps))
-            model.module.save('latest')            
-            np.savetxt(iter_path, (epoch, epoch_iter), delimiter=',', fmt='%d')
-
-        if epoch_iter >= dataset_size:
-            break
-       
-    # end of epoch 
-    iter_end_time = time.time()
-    print('End of epoch %d / %d \t Time Taken: %d sec' %
-          (epoch, opt.niter + opt.niter_decay, time.time() - epoch_start_time))
-
-    ### save model for this epoch
-    if epoch % opt.save_epoch_freq == 0:
-        print('saving the model at the end of epoch %d, iters %d' % (epoch, total_steps))        
-        model.module.save('latest')
-        model.module.save(epoch)
-        np.savetxt(iter_path, (epoch+1, 0), delimiter=',', fmt='%d')
-
-    ### instead of only training the local enhancer, train the entire network after certain iterations
-    if (opt.niter_fix_global != 0) and (epoch == opt.niter_fix_global):
-        model.module.update_fixed_params()
-
-    ### linearly decay learning rate after certain iterations
-    if epoch > opt.niter:
-        model.module.update_learning_rate()
+        print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.n_epochs + opt.n_epochs_decay, time.time() - epoch_start_time))
