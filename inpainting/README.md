@@ -29,7 +29,7 @@ python datasets/combine_A_and_B.py --fold_A INPUT_IMAGE_DATA_PATH --fold_B GROUN
 #!./scripts/test_256p.sh
 python test.py --dataroot datasets/test --name fixed_render_hd1  --model pix2pix
 ```
-The test results will be saved to a html file here: `./results/fixed_rendering_more/test_latest/index.html`.
+The test results will be saved to a html file here: `./results/fixed_render_hd1/test_latest/index.html`.
 
 More example scripts can be found in the `scripts` directory.
 
