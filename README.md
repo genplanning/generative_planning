@@ -28,6 +28,7 @@ Explanation for the demonstrated images: (top) the semantic
 point cloud; the white dot is vehicle pose and the green dot is the end point. 
 (Middle) The skeletonized road with waypoints (blue dots), (bottom) the planned path; the start is
 in pink, the goal is in green, and the planned nodes are in blue
+
 Figure 1:
 <img src='results/10401.png' align="center" width=1000>
 Figure 2:
