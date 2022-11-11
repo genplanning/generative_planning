@@ -1,10 +1,11 @@
 # Generative Planning-path planner
+The environment for planning the path using the inpainted semantic map
 
-# prerequsites
-Code tested on Python 3.6.13
-We use Anaconda for library management
+## Prerequisites
+- Linux or macOS
+- Python 3.6.13
 
-# Install Dependencies
+## Install Dependencies
 - Creating the virtual environment
 ```bash
 conda create --name planner_demo --file requirements.txt
@@ -17,5 +18,5 @@ pip install opencv-python
 ```
 
 
-# Run Demo
+## Run Demo
 Running the Jupyter Notebook CoRL2022_demo.ipynb to visualize the planner
