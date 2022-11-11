@@ -1,6 +1,6 @@
-# Path planner by using the inpainted semantic map
+# Generative Planning-path planner
 
-# Note
+# prerequsites
 Code tested on Python 3.6.13
 We use Anaconda for library management
 
