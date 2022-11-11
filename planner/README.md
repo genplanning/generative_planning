@@ -3,7 +3,7 @@ The python implementamention for planning the path using the inpainted semantic 
 
 ## Prerequisites
 - Linux or macOS
-- Python 3.6 or higher
+- Python 3.6.13 or higher
 
 ## Installing Dependencies
 - Creating the virtual environment
