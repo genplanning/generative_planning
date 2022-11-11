@@ -12,7 +12,7 @@ conda create --name planner_demo --file requirements.txt
 conda activate planner_demo
 ```
 
-- Install opencv separately with 
+- Installing opencv separately with 
 ```bash
 pip install opencv-python
 ```
