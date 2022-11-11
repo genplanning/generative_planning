@@ -23,3 +23,4 @@ To test our model, please run the inference instruction under the 'inpainting' f
 
 # Results
 
+<img src='results/10401.png' align="center" width=1000>
