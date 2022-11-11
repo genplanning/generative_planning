@@ -18,5 +18,5 @@ cd planner
 ```
 The code and instructions to run the path planning method are under the 'planner' folder.
 
-#Note for test the model
+# Note for test the model
 To test our model, please run the inference instruction under the 'inpainting' folder first. Then use the predicted semantic map to run the planning stage.
