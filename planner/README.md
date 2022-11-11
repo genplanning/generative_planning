@@ -1,4 +1,6 @@
-# Python Environment
+# Path planner by using the inpainted semantic map
+
+# Note
 Code tested on Python 3.6.13
 We use Anaconda for library management
 
