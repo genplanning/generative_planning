@@ -24,7 +24,7 @@ To test our model, please run the inference instruction under the 'inpainting' f
 # Results
 Here are some planning results by using our generative planning pipeline. 
 
-Explanation for the demonstrated images:(top) the semantic
+Explanation for the demonstrated images: (top) the semantic
 point cloud; the white dot is vehicle pose and the green dot is the end point. 
 (Middle) The skeletonized road with waypoints (blue dots), (bottom) the planned path; the start is
 in pink, the goal is in green, and the planned nodes are in blue
