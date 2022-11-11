@@ -16,4 +16,4 @@ pip install opencv-python
 
 
 # Run Demo
-Run the Jupyter Notebook CoRL2022_demo.ipynb to visualize the planner
+Running the Jupyter Notebook CoRL2022_demo.ipynb to visualize the planner
