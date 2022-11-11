@@ -1,5 +1,5 @@
 # Generative Planning-path planner
-The environment for planning the path using the inpainted semantic map
+The python implementamention for planning the path using the inpainted semantic map
 
 ## Prerequisites
 - Linux or macOS
