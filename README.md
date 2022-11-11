@@ -1,5 +1,5 @@
 # Generative_planning
-the GitHub repo for CORL 2022 accepted Oral paper "Planning Paths through Occlusions in Urban Environments"
+The GitHub repo for CORL 2022 accepted oral paper "Planning Paths through Occlusions in Urban Environments"
 
 # Inpainting model
 To generate the inpainted semantic map, first type the command
