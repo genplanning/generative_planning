@@ -5,7 +5,7 @@ The python implementamention for planning the path using the inpainted semantic 
 - Linux or macOS
 - Python 3.6.13
 
-## Install Dependencies
+## Installing Dependencies
 - Creating the virtual environment
 ```bash
 conda create --name planner_demo --file requirements.txt
@@ -18,5 +18,5 @@ pip install opencv-python
 ```
 
 
-## Run Demo
+## Running Demo
 Running the Jupyter Notebook CoRL2022_demo.ipynb to visualize the planner
