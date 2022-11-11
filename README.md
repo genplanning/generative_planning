@@ -1,6 +1,6 @@
-# generative_planning
+# Generative_planning
 the GitHub repo for CORL submission "Planning Paths through Occlusions in Urban Environments"
-# inpainting model
+# Inpainting model
 The code and instructions to run the inpainting model are under the 'inpainting' folder.
 # path planning
 The code and instructions to run the path planning method are under the 'planner' folder.
